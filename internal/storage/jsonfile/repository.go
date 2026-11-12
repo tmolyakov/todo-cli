@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/tmolyakov/todo-cli/internal/task"
 )
@@ -58,9 +59,26 @@ func (r *Repository) Add(t task.Task) (task.Task, error) {
 		return task.Task{}, fmt.Errorf("encode task err %w", err)
 	}
 
-	err = os.WriteFile(r.path, data, 0644)
+	tempFile, err := os.CreateTemp(filepath.Dir(r.path), ".tmp-*")
+	defer os.Remove(tempFile.Name())
 	if err != nil {
-		return task.Task{}, fmt.Errorf("write task to file err %w", err)
+		return task.Task{}, fmt.Errorf("create temp file err %w", err)
 	}
+
+	if _, err := tempFile.Write(data); err != nil {
+		tempFile.Close()
+		return task.Task{}, fmt.Errorf("write temp file err %w", err)
+	}
+	if err := tempFile.Sync(); err != nil {
+		tempFile.Close()
+		return task.Task{}, fmt.Errorf("sync temp file err %w", err)
+	}
+	if err := tempFile.Close(); err != nil {
+		return task.Task{}, fmt.Errorf("close temp file err %w", err)
+	}
+	if err := os.Rename(tempFile.Name(), r.path); err != nil {
+		return task.Task{}, fmt.Errorf("rename temp file err %w", err)
+	}
+
 	return t, nil
 }
