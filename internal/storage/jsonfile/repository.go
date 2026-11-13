@@ -60,10 +60,10 @@ func (r *Repository) Add(t task.Task) (task.Task, error) {
 	}
 
 	tempFile, err := os.CreateTemp(filepath.Dir(r.path), ".tmp-*")
-	defer os.Remove(tempFile.Name())
 	if err != nil {
 		return task.Task{}, fmt.Errorf("create temp file err %w", err)
 	}
+	defer os.Remove(tempFile.Name())
 
 	if _, err := tempFile.Write(data); err != nil {
 		tempFile.Close()
