@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/tmolyakov/todo-cli/internal/storage/jsonfile"
+	"github.com/tmolyakov/todo-cli/internal/task"
 	"github.com/tmolyakov/todo-cli/internal/todo"
 )
 
@@ -45,7 +46,22 @@ func main() {
 			}
 
 		case "2":
-			fmt.Println("2")
+			fmt.Print("Текст задачи: ")
+			if !scanner.Scan() {
+				return
+			}
+
+			added, err := service.Add(task.Task{
+				Text:     strings.TrimSpace(scanner.Text()),
+				Status:   task.StatusActive,
+				Priority: task.PriorityMedium,
+			})
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "Не удалось добавить задачу:", err)
+				continue
+			}
+
+			fmt.Printf("Добавлена задача №%d\n", added.ID)
 		}
 	}
 }
